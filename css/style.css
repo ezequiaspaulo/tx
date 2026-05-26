@@ -1,7 +1,10 @@
+/* ==========================================
+   ESTILOS GERAIS
+   ========================================== */
 body {
     margin: 0;
     padding: 0;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
     height: 100vh;
     display: flex;
     flex-direction: column;
@@ -16,8 +19,11 @@ h1 {
     text-align: center;
     background: #000;
     color: #ff8800;
-    font-size: 1.5em;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+    font-size: 1.3em;
+    font-weight: 600;
+    letter-spacing: 1px;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+    z-index: 1510;
 }
 
 #map {
@@ -26,101 +32,236 @@ h1 {
     display: none;
 }
 
+/* ==========================================
+   PAINÉIS FLUTUANTES DO MAPA
+   ========================================== */
 .status, .timer, .online-toggle-btn {
     position: absolute;
-    background: rgba(0, 0, 0, 0.8);
-    padding: 8px 12px;
-    border-radius: 20px;
+    background: rgba(0, 0, 0, 0.75);
+    backdrop-filter: blur(8px);
+    padding: 10px 16px;
+    border-radius: 30px;
     color: #ff8800;
     z-index: 1000;
-    font-size: 0.9em;
+    font-size: 0.85em;
+    font-weight: 600;
+    border: 1px solid rgba(255, 136, 0, 0.2);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     display: none;
 }
 
-.status { top: 140px; left: 10px; }
-.timer { top: 180px; left: 10px; }
+.status { top: 140px; left: 15px; }
+.timer { top: 190px; left: 15px; color: #fff; }
+
 .online-toggle-btn {
-    top: 140px;
-    right: 10px;
-    background: #444;
-    color: #fff;
-    border: 1px solid #ff8800;
-    cursor: pointer;
-    width: 110px;
-    text-align: center;
+    top: 140px; right: 15px; 
+    background: rgba(51, 51, 51, 0.8);
+    color: #fff; border: 1px solid #ff8800; 
+    cursor: pointer; width: 120px; 
+    text-align: center; transition: all 0.2s;
 }
 
-.online-toggle-btn:hover {
+.online-toggle-btn:hover { 
+    background: #ff8800; color: #000; transform: scale(1.03); 
+}
+
+/* Customização Leaflet */
+.leaflet-popup-content-wrapper { background: rgba(0,0,0,0.9); color: #fff; border: 1px solid #ff8800; }
+.leaflet-popup-tip { background: #000; }
+.leaflet-popup-content b { color: #ff8800; font-size: 1.1em; }
+.leaflet-popup-content small { color: #ccc; }
+
+/* ==========================================
+   MENU FLUTUANTE E ABA LATERAL (SIDEBAR)
+   ========================================== */
+.menu-btn {
+    position: absolute;
+    top: 80px;
+    left: 15px;
+    background: rgba(0, 0, 0, 0.85);
+    color: #ff8800;
+    border: 1px solid #ff8800;
+    padding: 10px 18px;
+    border-radius: 8px;
+    cursor: pointer;
+    z-index: 1000;
+    font-size: 15px;
+    font-weight: 600;
+    display: none; /* Só aparece após o login */
+    backdrop-filter: blur(5px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    transition: all 0.3s ease;
+}
+
+.menu-btn:hover {
     background: #ff8800;
     color: #000;
+    transform: translateY(-2px);
 }
 
-.leaflet-popup-content { text-align: center; font-size: 1em; }
-.leaflet-popup-content b { display: block; color: #000; font-size: 1.1em; }
-.leaflet-popup-content small { display: block; margin-top: 3px; color: #333; font-weight: bold; }
+.sidebar {
+    position: fixed;
+    top: 54px; /* Logo abaixo do H1 */
+    left: -320px; /* Começa escondida */
+    width: 320px;
+    height: calc(100vh - 54px);
+    background: rgba(15, 15, 15, 0.96);
+    border-right: 2px solid #ff8800;
+    z-index: 1500;
+    transition: left 0.3s ease;
+    box-shadow: 5px 0 15px rgba(0, 0, 0, 0.5);
+}
 
-/* Splash Screen */
+.sidebar.open { left: 0; }
+
+.sidebar-content {
+    padding: 20px;
+    overflow-y: auto;
+    height: 100%;
+    box-sizing: border-box;
+}
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid rgba(255, 136, 0, 0.3);
+    padding-bottom: 15px;
+    margin-bottom: 15px;
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    color: #ff8800;
+    font-size: 20px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    color: #fff;
+    font-size: 20px;
+    cursor: pointer;
+    transition: color 0.2s;
+    outline: none;
+}
+
+.close-btn:hover { color: #ff3333; }
+
+/* Lista de Cards das Rotas */
+.lista-rotas {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.rota-card {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 12px;
+    transition: all 0.2s;
+    cursor: pointer;
+    text-align: left;
+}
+
+.rota-card:hover {
+    border-color: #ff8800;
+    background: rgba(255, 136, 0, 0.1);
+}
+
+.rota-card h4 { margin: 0 0 6px 0; color: #ff8800; font-size: 14px; }
+.rota-card p { margin: 3px 0; font-size: 12px; color: #ccc; }
+
+/* ==========================================
+   ANIMAÇÃO INICIAL (SPLASH)
+   ========================================== */
 #splashScreen {
     position: fixed; top: 0; left: 0; width: 100%; height: 100%;
     background-color: black; display: flex; justify-content: center;
     align-items: center; z-index: 9999; opacity: 1; transition: opacity 0.5s ease-out;
 }
 #splashLogo {
-    max-width: 80%; max-height: 80%; opacity: 0;
-    transform: scale(0.5) rotate(-30deg);
-    animation: fadeInScaleRotate 1.5s forwards ease-out;
+    max-width: 60%; max-height: 60%; opacity: 0;
+    transform: scale(0.5) rotate(-30deg); animation: fadeInScaleRotate 1.5s forwards ease-out;
 }
 @keyframes fadeInScaleRotate {
     0% { opacity: 0; transform: scale(0.5) rotate(-30deg); }
-    70% { opacity: 1; transform: scale(1.1) rotate(5deg); }
+    70% { opacity: 1; transform: scale(1.05) rotate(3deg); }
     100% { opacity: 1; transform: scale(1) rotate(0deg); }
 }
 
-/* Login Overlay */
+/* ==========================================
+   TELA DE LOGIN
+   ========================================== */
 #loginOverlay {
     position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-    background: rgba(0, 0, 0, 0.9); display: flex; justify-content: center;
+    background: rgba(0, 0, 0, 0.95); display: flex; justify-content: center;
     align-items: center; z-index: 2000; opacity: 0; visibility: hidden;
     transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
 }
 #loginOverlay.visible { opacity: 1; visibility: visible; }
-.login-background-image {
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
-    object-fit: contain; opacity: 0.1; z-index: 1;
+
+.login-background-image { 
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
+    object-fit: contain; opacity: 0.08; z-index: 1; pointer-events: none; 
 }
+
 .login-box {
-    position: relative; z-index: 10; width: 400px; max-width: 90%;
-    background-color: rgba(255, 136, 0, 0.13); border-radius: 10px;
-    backdrop-filter: blur(10px); border: 2px solid rgba(255, 136, 0, 0.1);
-    box-shadow: 0 0 40px rgba(0, 0, 0, 0.6); padding: 30px 25px;
-    text-align: center; transform: translateY(20px); opacity: 0;
-    transition: transform 0.5s ease-out, opacity 0.5s ease-out;
+    position: relative; z-index: 10; width: 380px; max-width: 85%;
+    background-color: rgba(255, 136, 0, 0.06); border-radius: 16px;
+    backdrop-filter: blur(15px); border: 1px solid rgba(255, 136, 0, 0.15);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.7); padding: 40px 30px; text-align: center;
+    transform: translateY(30px); opacity: 0; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 #loginOverlay.visible .login-box { transform: translateY(0); opacity: 1; }
-.login-box h2 { font-size: 28px; font-weight: 500; margin-bottom: 15px; color: #000; }
-.login-box label { display: block; margin-top: 20px; font-size: 16px; font-weight: 500; color: #000; }
-.login-box input {
-    display: block; height: 45px; width: 100%; box-sizing: border-box;
-    background-color: rgba(0, 0, 0, 0.07); border-radius: 3px; padding: 0 10px;
-    margin-top: 8px; font-size: 14px; color: #000; border: none; outline: none;
-}
-.login-box input:focus { box-shadow: 0 0 0 2px #ff8800; background-color: rgba(0, 0, 0, 0.15); }
-.login-box button {
-    margin-top: 30px; width: 100%; background-color: #000; color: #ff8800;
-    padding: 15px 0; font-size: 18px; font-weight: 600; border-radius: 5px;
-    cursor: pointer; border: none; transition: all 0.2s ease;
-}
-.login-box button:hover { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(255, 136, 0, 0.4); background-color: #333; }
 
-/* Route Control */
-#routeControl {
-    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
-    display: none; z-index: 1000;
+.login-box h2 { font-size: 26px; font-weight: 600; margin-bottom: 25px; color: #ff8800; letter-spacing: 0.5px; }
+.login-box label { display: block; text-align: left; font-size: 14px; font-weight: 500; margin-top: 15px; color: #aaa; }
+.login-box input {
+    display: block; height: 48px; width: 100%; box-sizing: border-box;
+    background-color: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 0 15px;
+    margin-top: 6px; font-size: 15px; color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); outline: none; transition: all 0.3s;
 }
+.login-box input:focus { 
+    border-color: #ff8800; box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.2); 
+    background-color: rgba(255, 255, 255, 0.12); 
+}
+.login-box button {
+    margin-top: 30px; width: 100%; background-color: #ff8800; color: #000;
+    padding: 14px 0; font-size: 16px; font-weight: 700; border-radius: 8px;
+    cursor: pointer; border: none; transition: all 0.3s;
+}
+.login-box button:hover { 
+    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 136, 0, 0.4); 
+    background-color: #ffa733; 
+}
+
+/* ==========================================
+   CONTROLE DE ROTA (BOTÕES INFERIORES)
+   ========================================== */
+#routeControl { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; z-index: 1000; }
 #routeControl button {
-    width: 80px; height: 80px; border-radius: 50%; background-color: #ff8800;
-    color: #000; border: none; font-size: 14px; font-weight: bold;
-    cursor: pointer; transition: background 0.2s ease; margin: 0 5px;
+    width: 85px; height: 85px; border-radius: 50%; background-color: #ff8800;
+    color: #000; border: none; font-size: 14px; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); margin: 0 8px;
 }
-#routeControl button:hover { background-color: #ffa733; }
+#routeControl button:hover { 
+    background-color: #ffa733; transform: scale(1.08); box-shadow: 0 6px 20px rgba(255,136,0,0.4); 
+}
 #endButton { display: none; }
+
+/* ==========================================
+   TOASTS (NOTIFICAÇÕES FLUTUANTES)
+   ========================================== */
+.toast-container { position: fixed; top: 70px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
+.toast {
+    background: rgba(0, 0, 0, 0.9); border-left: 4px solid #ff8800; color: #fff;
+    padding: 14px 24px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    font-weight: 500; font-size: 14px; min-width: 250px; backdrop-filter: blur(5px);
+    transform: translateX(120%); animation: slideIn 0.3s forwards, fadeOut 0.3s 4.2s forwards;
+}
+.toast.error { border-left-color: #ff3333; }
+.toast.success { border-left-color: #22c55e; }
+@keyframes slideIn { to { transform: translateX(0); } }
+@keyframes fadeOut { to { opacity: 0; transform: translateX(120%); } }

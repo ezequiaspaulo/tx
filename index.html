@@ -5,16 +5,40 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Tx Produções - Rastreamento</title>
 
+    <meta name="theme-color" content="#ff8800">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="https://i.ibb.co/SwcXP0V5/tx.jpg">
+
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    
     <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
+    <div id="toastContainer" class="toast-container"></div>
+
     <div id="splashScreen">
         <img id="splashLogo" src="https://i.ibb.co/SwcXP0V5/tx.jpg" alt="TX Logo">
     </div>
 
     <h1>Tx Produções - Rastreamento</h1>
+
+    <button id="openMenuBtn" class="menu-btn">☰ Histórico</button>
+
+    <div id="sidebar" class="sidebar">
+        <div class="sidebar-content">
+            <div class="sidebar-header">
+                <h3>Minhas Rotas</h3>
+                <button id="closeSidebarBtn" class="close-btn">✖</button>
+            </div>
+            
+            <div style="padding-bottom: 15px; border-bottom: 1px solid rgba(255,136,0,0.3); margin-bottom: 15px;">
+                <button id="logoutBtn" class="logout-btn">Sair do App</button>
+            </div>
+
+            <div id="listaRotas" class="lista-rotas">
+                <p style="color: #666; font-size: 13px;">Carregando histórico...</p>
+            </div>
+        </div>
+    </div>
 
     <div class="overlay" id="loginOverlay">
         <img src="https://i.ibb.co/SwcXP0V5/tx.jpg" alt="TX Logo Fundo" class="login-background-image">
@@ -30,8 +54,6 @@
                 
                 <button type="submit" id="loginBtn">Entrar</button>
             </form>
-            
-            <p id="loginError" style="color: #ff3333; font-weight: bold; font-size: 14px; margin-top: 15px; display: none;"></p>
         </div>
     </div>
 
