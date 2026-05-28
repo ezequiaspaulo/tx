@@ -1,16 +1,18 @@
 /* ==========================================
-   ESTILOS GERAIS
+   ESTILOS GERAIS E RESPONSIVIDADE BASE
    ========================================== */
 body {
     margin: 0;
     padding: 0;
     font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-    height: 100vh;
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Respeita a barra de endereços no mobile */
     display: flex;
     flex-direction: column;
     background: linear-gradient(135deg, #ff8800 0%, #000000 100%);
     color: #fff;
     overflow: hidden;
+    touch-action: none; /* Previne puxar a tela para atualizar no mobile */
 }
 
 h1 {
@@ -24,12 +26,20 @@ h1 {
     letter-spacing: 1px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
     z-index: 1510;
+    position: relative;
 }
 
 #map {
     flex: 1;
     width: 100%;
     display: none;
+}
+
+/* ==========================================
+   REMOÇÃO DA MARCA D'ÁGUA (OPENSTREETMAP)
+   ========================================== */
+.leaflet-control-attribution {
+    display: none !important;
 }
 
 /* ==========================================
@@ -50,11 +60,11 @@ h1 {
     display: none;
 }
 
-.status { top: 140px; left: 15px; }
-.timer { top: 190px; left: 15px; color: #fff; }
+.status { top: 75px; left: 15px; }
+.timer { top: 125px; left: 15px; color: #fff; }
 
 .online-toggle-btn {
-    top: 140px; right: 15px; 
+    top: 75px; right: 15px; 
     background: rgba(51, 51, 51, 0.8);
     color: #fff; border: 1px solid #ff8800; 
     cursor: pointer; width: 120px; 
@@ -76,35 +86,31 @@ h1 {
    ========================================== */
 .menu-btn {
     position: absolute;
-    top: 80px;
-    left: 15px;
-    background: rgba(0, 0, 0, 0.85);
+    top: 10px; /* Coloca dentro do header */
+    left: 15px; 
+    background: transparent;
     color: #ff8800;
-    border: 1px solid #ff8800;
-    padding: 10px 18px;
-    border-radius: 8px;
+    border: none;
+    padding: 5px 10px;
     cursor: pointer;
-    z-index: 1000;
-    font-size: 15px;
-    font-weight: 600;
-    display: none; /* Só aparece após o login */
-    backdrop-filter: blur(5px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.4);
+    z-index: 1520;
+    font-size: 26px;
+    font-weight: bold;
+    display: none; 
     transition: all 0.3s ease;
 }
 
 .menu-btn:hover {
-    background: #ff8800;
-    color: #000;
-    transform: translateY(-2px);
+    color: #fff;
+    transform: scale(1.1);
 }
 
 .sidebar {
     position: fixed;
-    top: 54px; /* Logo abaixo do H1 */
-    left: -320px; /* Começa escondida */
+    top: 54px;
+    left: -320px;
     width: 320px;
-    height: calc(100vh - 54px);
+    height: calc(100dvh - 54px);
     background: rgba(15, 15, 15, 0.96);
     border-right: 2px solid #ff8800;
     z-index: 1500;
@@ -130,46 +136,17 @@ h1 {
     margin-bottom: 15px;
 }
 
-.sidebar-header h3 {
-    margin: 0;
-    color: #ff8800;
-    font-size: 20px;
-}
-
-.close-btn {
-    background: none;
-    border: none;
-    color: #fff;
-    font-size: 20px;
-    cursor: pointer;
-    transition: color 0.2s;
-    outline: none;
-}
-
+.sidebar-header h3 { margin: 0; color: #ff8800; font-size: 20px; }
+.close-btn { background: none; border: none; color: #fff; font-size: 20px; cursor: pointer; transition: color 0.2s; outline: none; }
 .close-btn:hover { color: #ff3333; }
 
 /* Lista de Cards das Rotas */
-.lista-rotas {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
+.lista-rotas { display: flex; flex-direction: column; gap: 12px; }
 .rota-card {
-    background: rgba(255, 255, 255, 0.05);
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 12px;
-    transition: all 0.2s;
-    cursor: pointer;
-    text-align: left;
+    background: rgba(255, 255, 255, 0.05); border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px; padding: 12px; transition: all 0.2s; cursor: pointer; text-align: left;
 }
-
-.rota-card:hover {
-    border-color: #ff8800;
-    background: rgba(255, 136, 0, 0.1);
-}
-
+.rota-card:hover { border-color: #ff8800; background: rgba(255, 136, 0, 0.1); }
 .rota-card h4 { margin: 0 0 6px 0; color: #ff8800; font-size: 14px; }
 .rota-card p { margin: 3px 0; font-size: 12px; color: #ccc; }
 
@@ -201,12 +178,7 @@ h1 {
     transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
 }
 #loginOverlay.visible { opacity: 1; visibility: visible; }
-
-.login-background-image { 
-    position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-    object-fit: contain; opacity: 0.08; z-index: 1; pointer-events: none; 
-}
-
+.login-background-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: contain; opacity: 0.08; z-index: 1; pointer-events: none; }
 .login-box {
     position: relative; z-index: 10; width: 380px; max-width: 85%;
     background-color: rgba(255, 136, 0, 0.06); border-radius: 16px;
@@ -215,7 +187,6 @@ h1 {
     transform: translateY(30px); opacity: 0; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 #loginOverlay.visible .login-box { transform: translateY(0); opacity: 1; }
-
 .login-box h2 { font-size: 26px; font-weight: 600; margin-bottom: 25px; color: #ff8800; letter-spacing: 0.5px; }
 .login-box label { display: block; text-align: left; font-size: 14px; font-weight: 500; margin-top: 15px; color: #aaa; }
 .login-box input {
@@ -223,45 +194,68 @@ h1 {
     background-color: rgba(255, 255, 255, 0.08); border-radius: 8px; padding: 0 15px;
     margin-top: 6px; font-size: 15px; color: #fff; border: 1px solid rgba(255, 255, 255, 0.1); outline: none; transition: all 0.3s;
 }
-.login-box input:focus { 
-    border-color: #ff8800; box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.2); 
-    background-color: rgba(255, 255, 255, 0.12); 
-}
+.login-box input:focus { border-color: #ff8800; box-shadow: 0 0 0 3px rgba(255, 136, 0, 0.2); background-color: rgba(255, 255, 255, 0.12); }
 .login-box button {
     margin-top: 30px; width: 100%; background-color: #ff8800; color: #000;
     padding: 14px 0; font-size: 16px; font-weight: 700; border-radius: 8px;
     cursor: pointer; border: none; transition: all 0.3s;
 }
-.login-box button:hover { 
-    transform: translateY(-2px); box-shadow: 0 6px 20px rgba(255, 136, 0, 0.4); 
-    background-color: #ffa733; 
-}
 
 /* ==========================================
    CONTROLE DE ROTA (BOTÕES INFERIORES)
    ========================================== */
-#routeControl { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; z-index: 1000; }
+#routeControl { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); display: none; z-index: 1000; white-space: nowrap; }
 #routeControl button {
     width: 85px; height: 85px; border-radius: 50%; background-color: #ff8800;
     color: #000; border: none; font-size: 14px; font-weight: 700; box-shadow: 0 4px 15px rgba(0,0,0,0.4);
-    cursor: pointer; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); margin: 0 8px;
+    cursor: pointer; transition: all 0.3s; margin: 0 8px;
 }
-#routeControl button:hover { 
-    background-color: #ffa733; transform: scale(1.08); box-shadow: 0 6px 20px rgba(255,136,0,0.4); 
-}
+#routeControl button:hover { background-color: #ffa733; transform: scale(1.08); box-shadow: 0 6px 20px rgba(255,136,0,0.4); }
 #endButton { display: none; }
 
 /* ==========================================
-   TOASTS (NOTIFICAÇÕES FLUTUANTES)
+   ADAPTAÇÃO PARA CELULARES (MOBILE RESPONSIVE)
    ========================================== */
-.toast-container { position: fixed; top: 70px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 10px; }
-.toast {
-    background: rgba(0, 0, 0, 0.9); border-left: 4px solid #ff8800; color: #fff;
-    padding: 14px 24px; border-radius: 8px; box-shadow: 0 5px 15px rgba(0,0,0,0.5);
-    font-weight: 500; font-size: 14px; min-width: 250px; backdrop-filter: blur(5px);
-    transform: translateX(120%); animation: slideIn 0.3s forwards, fadeOut 0.3s 4.2s forwards;
+@media (max-width: 480px) {
+    h1 {
+        font-size: 1.1em;
+        padding: 12px 0;
+    }
+    
+    .menu-btn {
+        top: 8px;
+        font-size: 22px;
+    }
+
+    /* Reduz botões flutuantes para não ocuparem a tela toda */
+    .status { top: 60px; left: 10px; padding: 6px 12px; font-size: 0.75em; }
+    .timer { top: 100px; left: 10px; padding: 6px 12px; font-size: 0.75em; }
+    
+    .online-toggle-btn { 
+        top: 60px; right: 10px; width: 90px; padding: 6px; font-size: 0.75em; 
+    }
+
+    /* Ajuste da aba lateral para caber no celular */
+    .sidebar {
+        width: 280px;
+        left: -280px;
+    }
+
+    /* Reduz os botões de Iniciar/Encerrar Rota */
+    #routeControl {
+        bottom: 20px;
+    }
+    #routeControl button {
+        width: 70px;
+        height: 70px;
+        font-size: 12px;
+        margin: 0 5px;
+    }
+
+    /* Ajusta proporções da tela de login */
+    .login-box {
+        padding: 30px 20px;
+        max-width: 90%;
+    }
+    .login-box h2 { font-size: 22px; }
 }
-.toast.error { border-left-color: #ff3333; }
-.toast.success { border-left-color: #22c55e; }
-@keyframes slideIn { to { transform: translateX(0); } }
-@keyframes fadeOut { to { opacity: 0; transform: translateX(120%); } }

@@ -3,13 +3,15 @@
 // ==========================================
 const supabaseUrl = 'https://ujgeheiyoulouzcvztrp.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZ2VoZWl5b3Vsb3V6Y3Z6dHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDI4MzAsImV4cCI6MjA5NTMxODgzMH0.g2tvHjJjww2ZqxpMxUUjmQD7yZ8hdQKjUHK-p06BSaI';
-const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+// CORREÇÃO: Variável renomeada para 'supabaseClient' para evitar conflito com a CDN
+const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
 // 2. VARIÁVEIS GLOBAIS
 // ==========================================
 let userName = "";
-let userId = ""; // NOVO: Precisamos do ID para não duplicar no mapa
+let userId = ""; 
 let map, currentMarker, currentLat, currentLng;
 let isRecording = false;
 let isPaused = false;
@@ -21,11 +23,8 @@ let watchId = null;
 let timerInterval = null;
 let totalSeconds = 0;
 
-// ==========================================
-// NOVO: VARIÁVEIS DO MODO MULTIPLAYER
-// ==========================================
 let trackerChannel = null;
-let otherMarkers = {}; // Guarda os carrinhos dos outros funcionários
+let otherMarkers = {}; 
 
 const carIcon = L.icon({
     iconUrl: 'https://i.ibb.co/HD8N3Mgq/rangerprata-lateral.png',
@@ -37,10 +36,10 @@ const carIcon = L.icon({
 // 3. INICIALIZAÇÃO E EVENTOS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
-    // --- Lógica da Splash Screen ---
     const splashScreen = document.getElementById('splashScreen');
     const loginOverlay = document.getElementById('loginOverlay');
     
+    // Animação de Splash Screen
     setTimeout(() => {
         splashScreen.style.opacity = '0';
         setTimeout(() => {
@@ -49,7 +48,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500); 
     }, 2000);
 
-    // --- Lógica de Login ---
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
     const loginError = document.getElementById('loginError');
@@ -65,22 +63,23 @@ document.addEventListener('DOMContentLoaded', () => {
         const pass = document.getElementById('loginPass').value.trim();
 
         try {
-            const { data, error } = await supabase.auth.signInWithPassword({
+            // CORREÇÃO AQUI
+            const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: pass,
             });
 
             if (error) throw error; 
 
-            // Se o login for um sucesso:
             userName = data.user.email.split('@')[0];
-            userId = data.user.id; // Guarda a ID do funcionário logado
+            userId = data.user.id; 
             
             document.getElementById('loginOverlay').style.display = 'none';
             document.getElementById('map').style.display = 'block';
             document.getElementById('status').style.display = 'block';
             document.getElementById('routeControl').style.display = 'block';
             document.getElementById('onlineToggle').style.display = 'block';
+            document.getElementById('openMenuBtn').style.display = 'block'; 
             
             document.getElementById('status').innerText = 'Offline 🔴';
 
@@ -103,17 +102,76 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('onlineToggle').addEventListener('click', toggleOnlineStatus);
     document.getElementById('mainButton').addEventListener('click', handleRouteControl);
     document.getElementById('endButton').addEventListener('click', endRoute);
+
+    // Sidebar Lógica
+    const sidebar = document.getElementById('sidebar');
+    const openMenuBtn = document.getElementById('openMenuBtn');
+    const closeSidebarBtn = document.getElementById('closeSidebarBtn');
+
+    openMenuBtn.addEventListener('click', () => {
+        sidebar.classList.add('open');
+        carregarHistoricoReplays(); 
+    });
+
+    closeSidebarBtn.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+    });
 });
 
+async function carregarHistoricoReplays() {
+    const listaRotas = document.getElementById('listaRotas');
+    listaRotas.innerHTML = '<p style="color: #666; font-size: 13px;">Carregando histórico do servidor...</p>';
+
+    try {
+        // CORREÇÃO AQUI
+        const { data, error } = await supabaseClient
+            .from('historico_rotas') 
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(10); 
+
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+            listaRotas.innerHTML = ''; 
+            
+            data.forEach(rota => {
+                const card = document.createElement('div');
+                card.className = 'rota-card';
+                
+                let dataFormatada = new Date(rota.created_at).toLocaleDateString('pt-BR');
+                
+                card.innerHTML = `
+                    <h4>Rota: ${dataFormatada}</h4>
+                    <p>ID: ${rota.id}</p>
+                `;
+                
+                card.addEventListener('click', () => {
+                    alert(`Iniciando replay da rota ${rota.id} no mapa...`);
+                    document.getElementById('sidebar').classList.remove('open');
+                });
+                
+                listaRotas.appendChild(card);
+            });
+        } else {
+            listaRotas.innerHTML = '<p style="color: #666; font-size: 13px;">Nenhum replay encontrado.</p>';
+        }
+    } catch (err) {
+        console.error("Erro ao buscar replays:", err);
+        listaRotas.innerHTML = '<p style="color: #ff3333; font-size: 13px;">Erro ao carregar o histórico.</p>';
+    }
+}
+
 // ==========================================
-// 4. LÓGICA DO MAPA, ROTAS E MULTIPLAYER
+// 4. LÓGICA DO MAPA E ROTAS
 // ==========================================
 function initMap() {
-    map = L.map('map').setView([0, 0], 2);
+    map = L.map('map', {
+        zoomControl: false,
+        attributionControl: false
+    }).setView([0, 0], 2);
 
-    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '&copy; OpenStreetMap contributors'
-    }).addTo(map);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
     window.addEventListener('resize', () => { map.invalidateSize(); });
 
@@ -129,7 +187,6 @@ function initMap() {
                 isOnline = true; 
                 updateStatusDisplay();
 
-                // NOVO: Conecta à rede em tempo real quando o GPS fixa a primeira vez
                 configurarModoMultijogador();
             },
             handleLocationError,
@@ -156,7 +213,6 @@ function updateLocation(position) {
         updateRouteLine();
     }
 
-    // NOVO: Dispara a nova posição para os outros motoristas verem
     enviarMinhaLocalizacao();
 }
 
@@ -164,7 +220,6 @@ function updateMarker() {
     if (currentMarker) map.removeLayer(currentMarker);
     currentMarker = L.marker([currentLat, currentLng], { icon: carIcon })
         .addTo(map)
-        // Destaca que este é o SEU carrinho
         .bindPopup(`<b>${userName} (Você)</b><small>Tx Produções</small>`);
 }
 
@@ -192,8 +247,6 @@ function toggleOnlineStatus() {
     }
     isOnline = !isOnline;
     updateStatusDisplay();
-    
-    // NOVO: Atualiza a rede avisando se entrou ou saiu
     enviarMinhaLocalizacao();
 }
 
@@ -257,14 +310,17 @@ function updateRouteLine() {
     }
 }
 
-// ==========================================
-// 5. CRONÔMETRO
-// ==========================================
 function startTimer() {
     if (timerInterval) return; 
     timerInterval = setInterval(() => {
         totalSeconds++;
-        document.getElementById('timerDisplay').innerText = formatTime(totalSeconds);
+        const h = Math.floor(totalSeconds / 3600);
+        const m = Math.floor((totalSeconds % 3600) / 60);
+        const s = totalSeconds % 60;
+        document.getElementById('timerDisplay').innerText = 
+            (h > 0 ? h + ':' : '') + 
+            (m < 10 && h > 0 ? '0' : '') + m + ':' + 
+            (s < 10 ? '0' : '') + s;
     }, 1000);
 }
 
@@ -279,41 +335,28 @@ function resetTimer() {
     document.getElementById('timerDisplay').style.display = 'none'; 
 }
 
-function formatTime(seconds) {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    if (h > 0) return `${h}:${m < 10 ? '0' : ''}${m}:${s < 10 ? '0' : ''}${s}`;
-    else if (m > 0) return `${m}:${s < 10 ? '0' : ''}${s}`;
-    else return `${s}`;
-}
-
 // ==========================================
-// 6. NOVO: MOTOR DO GPS EM TEMPO REAL (FROTA)
+// 6. MOTOR DO GPS EM TEMPO REAL (FROTA)
 // ==========================================
 function configurarModoMultijogador() {
     if (!userId) return;
 
-    // Cria o "Canal de Rádio" invisível via WebSocket do Supabase
-    trackerChannel = supabase.channel('equipe-tx-gps', {
-        config: {
-            presence: { key: userId }, // A sua placa de identificação na rede
-        },
+    // CORREÇÃO AQUI
+    trackerChannel = supabaseClient.channel('equipe-tx-gps', {
+        config: { presence: { key: userId } }, 
     });
 
-    // Fica ouvindo movimentos das outras pessoas
     trackerChannel.on('presence', { event: 'sync' }, () => {
         const estadoGeral = trackerChannel.presenceState();
         renderizarOutrosUsuarios(estadoGeral);
     }).subscribe(async (status) => {
         if (status === 'SUBSCRIBED') {
-            enviarMinhaLocalizacao(); // Entra no canal informando onde está
+            enviarMinhaLocalizacao(); 
         }
     });
 }
 
 function enviarMinhaLocalizacao() {
-    // Só transmite se o rastreio estiver pronto e você estiver online
     if (trackerChannel && isOnline && currentLat && currentLng) {
         trackerChannel.track({
             user_name: userName,
@@ -321,7 +364,6 @@ function enviarMinhaLocalizacao() {
             lng: currentLng
         });
     } else if (trackerChannel && !isOnline) {
-        // Se clicar em offline, avisa a rede pra remover você do mapa dos outros
         trackerChannel.untrack(); 
     }
 }
@@ -329,7 +371,6 @@ function enviarMinhaLocalizacao() {
 function renderizarOutrosUsuarios(estadoGeral) {
     const idsOnlineAgora = Object.keys(estadoGeral);
 
-    // 1. Limpa do mapa quem fechou o app ou ficou offline
     for (let id in otherMarkers) {
         if (!idsOnlineAgora.includes(id) || id === userId) {
             map.removeLayer(otherMarkers[id]);
@@ -337,18 +378,15 @@ function renderizarOutrosUsuarios(estadoGeral) {
         }
     }
 
-    // 2. Cria ou Move os carrinhos de quem está ativo
     for (let id in estadoGeral) {
-        if (id === userId) continue; // Não duplicar a si mesmo
+        if (id === userId) continue; 
 
-        const dadosDoColega = estadoGeral[id][0]; // Pega os dados mais recentes dele
+        const dadosDoColega = estadoGeral[id][0]; 
         if (!dadosDoColega || !dadosDoColega.lat || !dadosDoColega.lng) continue;
 
         if (otherMarkers[id]) {
-            // Se o carrinho dele já existe, apenas move suavemente para a nova rua
             otherMarkers[id].setLatLng([dadosDoColega.lat, dadosDoColega.lng]);
         } else {
-            // Cria o carrinho dele no seu mapa
             const colegaIcon = L.icon({
                 iconUrl: 'https://i.ibb.co/HD8N3Mgq/rangerprata-lateral.png',
                 iconSize: [50, 50],
