@@ -1,10 +1,10 @@
-// Mude para v4 ou v5 para forçar a limpeza geral do cache offline
-const CACHE_NAME = 'tx-tracker-v4';
+// Mude para v6 para forçar a limpeza geral do cache offline
+const CACHE_NAME = 'tx-tracker-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
-  './css/style.css?v=2',
-  './js/app.js?v=2',
+  './css/style.css',
+  './js/app.js',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css',
   'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js',
   'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2'
@@ -16,7 +16,7 @@ self.addEventListener('install', (e) => {
       return cache.addAll(ASSETS_TO_CACHE);
     })
   );
-  self.skipWaiting(); // Força a instalação imediata do novo cache
+  self.skipWaiting(); 
 });
 
 self.addEventListener('activate', (e) => {
@@ -25,7 +25,7 @@ self.addEventListener('activate', (e) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
           if (cacheName !== CACHE_NAME) {
-            return caches.delete(cacheName); // Deleta a versão velha que está travando a tela
+            return caches.delete(cacheName); 
           }
         })
       );

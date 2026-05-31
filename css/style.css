@@ -259,3 +259,90 @@ h1 {
     }
     .login-box h2 { font-size: 22px; }
 }
+/* ==========================================
+   MELHORIAS DE LOGIN / CADASTRO
+   ========================================== */
+.subtitle {
+    font-size: 13px;
+    color: #ccc;
+    margin-top: -15px;
+    margin-bottom: 20px;
+}
+
+.switch-form {
+    margin-top: 20px;
+    font-size: 14px;
+    color: #aaa;
+}
+
+.switch-form a {
+    color: #ff8800;
+    text-decoration: none;
+    font-weight: 600;
+    transition: color 0.3s;
+}
+
+.switch-form a:hover {
+    color: #fff;
+    text-decoration: underline;
+}
+
+/* Wrapper para o ícone de olho na senha */
+.password-wrapper {
+    position: relative;
+    width: 100%;
+}
+
+.password-wrapper input {
+    padding-right: 40px; /* Espaço para o olho não sobrepor o texto */
+}
+
+.toggle-pwd {
+    position: absolute;
+    right: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    font-size: 16px;
+    color: #aaa;
+    user-select: none;
+    margin-top: 3px; /* Compensando a margem do input do design original */
+    filter: grayscale(1) opacity(0.7);
+    transition: all 0.3s;
+}
+
+.toggle-pwd:hover {
+    filter: grayscale(0) opacity(1);
+}
+
+/* Barra de força da senha */
+.strength-container {
+    text-align: left;
+    margin-top: 8px;
+    margin-bottom: 5px;
+}
+
+.strength-text {
+    font-size: 12px;
+    color: #aaa;
+}
+
+#strengthLabel {
+    font-weight: bold;
+}
+
+.strength-bar {
+    height: 4px;
+    width: 100%;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 2px;
+    margin-top: 4px;
+    overflow: hidden;
+}
+
+#strengthProgress {
+    height: 100%;
+    width: 0%;
+    background: #ff3333;
+    transition: width 0.3s ease, background-color 0.3s ease;
+}

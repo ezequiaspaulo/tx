@@ -4,7 +4,6 @@
 const supabaseUrl = 'https://ujgeheiyoulouzcvztrp.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZ2VoZWl5b3Vsb3V6Y3Z6dHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDI4MzAsImV4cCI6MjA5NTMxODgzMH0.g2tvHjJjww2ZqxpMxUUjmQD7yZ8hdQKjUHK-p06BSaI';
 
-// CORREÇÃO: Variável renomeada para 'supabaseClient' para evitar conflito com a CDN
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
@@ -48,6 +47,144 @@ document.addEventListener('DOMContentLoaded', () => {
         }, 500); 
     }, 2000);
 
+    // ==========================================
+    // 3.1. LÓGICA DE ALTERNÂNCIA (LOGIN / CADASTRO)
+    // ==========================================
+    const loginSection = document.getElementById('loginSection');
+    const registerSection = document.getElementById('registerSection');
+
+    document.getElementById('showRegisterBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        loginSection.style.display = 'none';
+        registerSection.style.display = 'block';
+    });
+
+    document.getElementById('showLoginBtn').addEventListener('click', (e) => {
+        e.preventDefault();
+        registerSection.style.display = 'none';
+        loginSection.style.display = 'block';
+    });
+
+    // ==========================================
+    // 3.2. LÓGICA DO "OLHINHO" DA SENHA
+    // ==========================================
+    function setupPasswordToggle(inputId, iconId) {
+        const input = document.getElementById(inputId);
+        const icon = document.getElementById(iconId);
+        if(!input || !icon) return;
+
+        icon.addEventListener('click', () => {
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.innerText = '🙈';
+            } else {
+                input.type = 'password';
+                icon.innerText = '👁️';
+            }
+        });
+    }
+
+    setupPasswordToggle('loginPass', 'toggleLoginPass');
+    setupPasswordToggle('regPass', 'toggleRegPass');
+    setupPasswordToggle('regPassConfirm', 'toggleRegPassConfirm');
+
+    // ==========================================
+    // 3.3. LÓGICA DA FORÇA DA SENHA
+    // ==========================================
+    const regPass = document.getElementById('regPass');
+    const strengthLabel = document.getElementById('strengthLabel');
+    const strengthProgress = document.getElementById('strengthProgress');
+
+    regPass.addEventListener('input', () => {
+        const val = regPass.value;
+        let forceLevel = 0;
+
+        if (val.length >= 4) forceLevel = 1; 
+        if (val.length >= 8) forceLevel = 2; 
+        if (val.length >= 8 && /[!@#$%^&*(),.?":{}|<>]/.test(val)) forceLevel = 3; 
+
+        if (val.length < 4) {
+            strengthLabel.innerText = 'Muito curta (Mín. 4)';
+            strengthLabel.style.color = '#ff3333';
+            strengthProgress.style.width = '20%';
+            strengthProgress.style.backgroundColor = '#ff3333';
+        } else if (forceLevel === 1) {
+            strengthLabel.innerText = 'Fraca';
+            strengthLabel.style.color = '#ff8800'; 
+            strengthProgress.style.width = '40%';
+            strengthProgress.style.backgroundColor = '#ff8800';
+        } else if (forceLevel === 2) {
+            strengthLabel.innerText = 'Média';
+            strengthLabel.style.color = '#ffcc00'; 
+            strengthProgress.style.width = '70%';
+            strengthProgress.style.backgroundColor = '#ffcc00';
+        } else if (forceLevel === 3) {
+            strengthLabel.innerText = 'Forte';
+            strengthLabel.style.color = '#33cc33'; 
+            strengthProgress.style.width = '100%';
+            strengthProgress.style.backgroundColor = '#33cc33';
+        }
+    });
+
+    // ==========================================
+    // 3.4. LÓGICA DE CADASTRO NO SUPABASE
+    // ==========================================
+    const registerForm = document.getElementById('registerForm');
+    const registerBtn = document.getElementById('registerBtn');
+
+    registerForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const nome = document.getElementById('regNome').value.trim();
+        const email = document.getElementById('regEmail').value.trim();
+        const telefone = document.getElementById('regTelefone').value.trim();
+        const senha = document.getElementById('regPass').value;
+        const senhaConfirma = document.getElementById('regPassConfirm').value;
+
+        if (senha.length < 4) {
+            alert("A senha deve ter no mínimo 4 caracteres.");
+            return;
+        }
+
+        if (senha !== senhaConfirma) {
+            alert("As senhas digitadas não coincidem!");
+            return;
+        }
+
+        registerBtn.innerText = 'Aguarde...';
+        registerBtn.disabled = true;
+
+        try {
+            const { data, error } = await supabaseClient.auth.signUp({
+                email: email,
+                password: senha,
+                options: {
+                    data: {
+                        nome_completo: nome,
+                        telefone: telefone
+                    }
+                }
+            });
+
+            if (error) throw error;
+
+            alert("Cadastro realizado com sucesso! Faça login para continuar.");
+            registerForm.reset();
+            strengthProgress.style.width = '0%';
+            document.getElementById('showLoginBtn').click();
+
+        } catch (err) {
+            console.error("Erro no cadastro:", err);
+            alert("Erro ao criar conta: " + err.message);
+        } finally {
+            registerBtn.innerText = 'Finalizar Cadastro';
+            registerBtn.disabled = false;
+        }
+    });
+
+    // ==========================================
+    // 3.5. LÓGICA DE LOGIN NO SUPABASE
+    // ==========================================
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
     const loginError = document.getElementById('loginError');
@@ -63,7 +200,6 @@ document.addEventListener('DOMContentLoaded', () => {
         const pass = document.getElementById('loginPass').value.trim();
 
         try {
-            // CORREÇÃO AQUI
             const { data, error } = await supabaseClient.auth.signInWithPassword({
                 email: email,
                 password: pass,
@@ -99,11 +235,13 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+    // ==========================================
+    // CONTROLES DO MAPA, ROTA E SIDEBAR
+    // ==========================================
     document.getElementById('onlineToggle').addEventListener('click', toggleOnlineStatus);
     document.getElementById('mainButton').addEventListener('click', handleRouteControl);
     document.getElementById('endButton').addEventListener('click', endRoute);
 
-    // Sidebar Lógica
     const sidebar = document.getElementById('sidebar');
     const openMenuBtn = document.getElementById('openMenuBtn');
     const closeSidebarBtn = document.getElementById('closeSidebarBtn');
@@ -123,7 +261,6 @@ async function carregarHistoricoReplays() {
     listaRotas.innerHTML = '<p style="color: #666; font-size: 13px;">Carregando histórico do servidor...</p>';
 
     try {
-        // CORREÇÃO AQUI
         const { data, error } = await supabaseClient
             .from('historico_rotas') 
             .select('*')
@@ -138,7 +275,6 @@ async function carregarHistoricoReplays() {
             data.forEach(rota => {
                 const card = document.createElement('div');
                 card.className = 'rota-card';
-                
                 let dataFormatada = new Date(rota.created_at).toLocaleDateString('pt-BR');
                 
                 card.innerHTML = `
@@ -341,7 +477,6 @@ function resetTimer() {
 function configurarModoMultijogador() {
     if (!userId) return;
 
-    // CORREÇÃO AQUI
     trackerChannel = supabaseClient.channel('equipe-tx-gps', {
         config: { presence: { key: userId } }, 
     });
