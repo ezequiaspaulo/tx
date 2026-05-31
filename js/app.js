@@ -7,7 +7,7 @@ const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
 // ==========================================
-// 2. VARIÁVEIS GLOBAIS
+// 2. VARIÁVEIS GLOBAIS E UTILITÁRIOS
 // ==========================================
 let userName = "";
 let userId = ""; 
@@ -26,30 +26,125 @@ let trackerChannel = null;
 let otherMarkers = {}; 
 
 const carIcon = L.icon({
-    iconUrl: 'https://i.ibb.co/HD8N3Mgq/rangerprata-lateral.png',
+    iconUrl: './imgs/rangerprata-lateral.png',
     iconSize: [50, 50],
     iconAnchor: [25, 25]
 });
 
+// --- SISTEMA DE TOAST (NOTIFICAÇÕES VISUAIS MÓVEIS) ---
+function showToast(message, type = 'error') {
+    const container = document.getElementById('toastContainer');
+    if (!container) return;
+
+    const toast = document.createElement('div');
+    toast.className = `toast ${type}`;
+    
+    let icon = '❌';
+    if (type === 'success') icon = '✅';
+    if (type === 'info') icon = 'ℹ️';
+
+    toast.innerHTML = `<span class="toast-icon">${icon}</span> <span>${message}</span>`;
+    container.appendChild(toast);
+
+    setTimeout(() => {
+        toast.classList.add('toast-fade-out');
+        setTimeout(() => toast.remove(), 300);
+    }, 4000);
+}
+
+function translateSupabaseError(err) {
+    const msg = err.message || "";
+    if (msg.includes("Invalid login credentials")) return "E-mail ou senha incorretos.";
+    if (msg.includes("Email not confirmed")) return "Por favor, confirme seu e-mail antes de entrar.";
+    if (msg.includes("User already registered")) return "Este e-mail já está em uso.";
+    if (msg.includes("Password should be at least")) return "A senha é muito fraca.";
+    if (msg.includes("Failed to fetch") || msg.includes("NetworkError")) return "Erro de conexão. Verifique sua internet.";
+    return "Ocorreu um erro inesperado. Tente novamente.";
+}
+
 // ==========================================
-// 3. INICIALIZAÇÃO E EVENTOS
+// 3. PWA (INSTALAÇÃO DO APP) E SERVICE WORKER
+// ==========================================
+let deferredPrompt;
+const installBanner = document.getElementById('installBanner');
+const installAppBtn = document.getElementById('installAppBtn');
+const closeInstallBanner = document.getElementById('closeInstallBanner');
+
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('./sw.js')
+            .then(reg => {
+                console.log('Service Worker registrado com sucesso!');
+                
+                // SISTEMA DE AUTO-RELOAD: Força a página a atualizar se você mudar a versão do sw.js
+                reg.addEventListener('updatefound', () => {
+                    const newWorker = reg.installing;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                            console.log('Nova versão do aplicativo encontrada. Atualizando...');
+                            window.location.reload();
+                        }
+                    });
+                });
+            })
+            .catch(err => console.error('Erro ao registrar Service Worker', err));
+    });
+}
+
+window.addEventListener('beforeinstallprompt', (e) => {
+    e.preventDefault();
+    deferredPrompt = e;
+    
+    const mapContainer = document.getElementById('map');
+    if (mapContainer && mapContainer.style.display === 'block') {
+        if (!window.matchMedia('(display-mode: standalone)').matches) {
+            if (installBanner) installBanner.style.display = 'flex';
+        }
+    }
+});
+
+if (closeInstallBanner) {
+    closeInstallBanner.addEventListener('click', () => {
+        if (installBanner) installBanner.style.display = 'none';
+    });
+}
+
+if (installAppBtn) {
+    installAppBtn.addEventListener('click', async () => {
+        if (installBanner) installBanner.style.display = 'none';
+        if (deferredPrompt) {
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') {
+                console.log('App instalado com sucesso');
+            }
+            deferredPrompt = null;
+        }
+    });
+}
+
+window.addEventListener('appinstalled', () => {
+    if (installBanner) installBanner.style.display = 'none';
+    showToast("Aplicativo baixado com sucesso!", "success");
+    deferredPrompt = null;
+});
+
+// ==========================================
+// 4. INICIALIZAÇÃO E EVENTOS
 // ==========================================
 document.addEventListener('DOMContentLoaded', () => {
     const splashScreen = document.getElementById('splashScreen');
     const loginOverlay = document.getElementById('loginOverlay');
     
-    // Animação de Splash Screen
     setTimeout(() => {
         splashScreen.style.opacity = '0';
         setTimeout(() => {
             splashScreen.style.display = 'none';
             loginOverlay.classList.add('visible');
+            loginOverlay.style.display = 'flex';
         }, 500); 
     }, 2000);
 
-    // ==========================================
-    // 3.1. LÓGICA DE ALTERNÂNCIA (LOGIN / CADASTRO)
-    // ==========================================
     const loginSection = document.getElementById('loginSection');
     const registerSection = document.getElementById('registerSection');
 
@@ -65,9 +160,6 @@ document.addEventListener('DOMContentLoaded', () => {
         loginSection.style.display = 'block';
     });
 
-    // ==========================================
-    // 3.2. LÓGICA DO "OLHINHO" DA SENHA
-    // ==========================================
     function setupPasswordToggle(inputId, iconId) {
         const input = document.getElementById(inputId);
         const icon = document.getElementById(iconId);
@@ -76,10 +168,10 @@ document.addEventListener('DOMContentLoaded', () => {
         icon.addEventListener('click', () => {
             if (input.type === 'password') {
                 input.type = 'text';
-                icon.innerText = '🙈';
+                icon.innerText = '🙈'; 
             } else {
                 input.type = 'password';
-                icon.innerText = '👁️';
+                icon.innerText = '👁️'; 
             }
         });
     }
@@ -88,9 +180,6 @@ document.addEventListener('DOMContentLoaded', () => {
     setupPasswordToggle('regPass', 'toggleRegPass');
     setupPasswordToggle('regPassConfirm', 'toggleRegPassConfirm');
 
-    // ==========================================
-    // 3.3. LÓGICA DA FORÇA DA SENHA
-    // ==========================================
     const regPass = document.getElementById('regPass');
     const strengthLabel = document.getElementById('strengthLabel');
     const strengthProgress = document.getElementById('strengthProgress');
@@ -126,9 +215,6 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // ==========================================
-    // 3.4. LÓGICA DE CADASTRO NO SUPABASE
-    // ==========================================
     const registerForm = document.getElementById('registerForm');
     const registerBtn = document.getElementById('registerBtn');
 
@@ -142,12 +228,12 @@ document.addEventListener('DOMContentLoaded', () => {
         const senhaConfirma = document.getElementById('regPassConfirm').value;
 
         if (senha.length < 4) {
-            alert("A senha deve ter no mínimo 4 caracteres.");
+            showToast("A senha deve ter no mínimo 4 caracteres.", "error");
             return;
         }
 
         if (senha !== senhaConfirma) {
-            alert("As senhas digitadas não coincidem!");
+            showToast("As senhas digitadas não coincidem!", "error");
             return;
         }
 
@@ -168,31 +254,26 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (error) throw error;
 
-            alert("Cadastro realizado com sucesso! Faça login para continuar.");
+            showToast("Cadastro realizado com sucesso! Faça login.", "success");
             registerForm.reset();
             strengthProgress.style.width = '0%';
             document.getElementById('showLoginBtn').click();
 
         } catch (err) {
             console.error("Erro no cadastro:", err);
-            alert("Erro ao criar conta: " + err.message);
+            showToast(translateSupabaseError(err), "error");
         } finally {
             registerBtn.innerText = 'Finalizar Cadastro';
             registerBtn.disabled = false;
         }
     });
 
-    // ==========================================
-    // 3.5. LÓGICA DE LOGIN NO SUPABASE
-    // ==========================================
     const loginForm = document.getElementById('loginForm');
     const loginBtn = document.getElementById('loginBtn');
-    const loginError = document.getElementById('loginError');
 
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
-        if(loginError) loginError.style.display = 'none';
         loginBtn.innerText = 'Autenticando...';
         loginBtn.disabled = true;
 
@@ -211,6 +292,7 @@ document.addEventListener('DOMContentLoaded', () => {
             userId = data.user.id; 
             
             document.getElementById('loginOverlay').style.display = 'none';
+            document.getElementById('loginOverlay').classList.remove('visible');
             document.getElementById('map').style.display = 'block';
             document.getElementById('status').style.display = 'block';
             document.getElementById('routeControl').style.display = 'block';
@@ -219,25 +301,71 @@ document.addEventListener('DOMContentLoaded', () => {
             
             document.getElementById('status').innerText = 'Offline 🔴';
 
+            showToast(`Bem-vindo(a), ${userName}!`, "success");
             initMap();
+
+            if (deferredPrompt && installBanner) {
+                if (!window.matchMedia('(display-mode: standalone)').matches) {
+                    installBanner.style.display = 'flex';
+                }
+            }
 
         } catch (err) {
             console.error("Erro no Supabase:", err);
-            if(loginError) {
-                loginError.innerText = "Falha no login: " + err.message;
-                loginError.style.display = 'block';
-            } else {
-                alert("Falha no login: " + err.message);
-            }
+            showToast(translateSupabaseError(err), "error");
         } finally {
             loginBtn.innerText = 'Entrar';
             loginBtn.disabled = false;
         }
     });
 
-    // ==========================================
-    // CONTROLES DO MAPA, ROTA E SIDEBAR
-    // ==========================================
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', async () => {
+            try {
+                await supabaseClient.auth.signOut();
+                
+                document.getElementById('sidebar').classList.remove('open');
+                document.getElementById('map').style.display = 'none';
+                document.getElementById('status').style.display = 'none';
+                document.getElementById('routeControl').style.display = 'none';
+                document.getElementById('onlineToggle').style.display = 'none';
+                document.getElementById('openMenuBtn').style.display = 'none';
+                document.getElementById('timerDisplay').style.display = 'none';
+                if (installBanner) installBanner.style.display = 'none';
+                
+                const overlay = document.getElementById('loginOverlay');
+                overlay.style.display = 'flex';
+                overlay.classList.add('visible');
+                
+                document.getElementById('loginForm').reset();
+                
+                userName = "";
+                userId = "";
+                isOnline = false;
+                if (isRecording) endRoute();
+                
+                if (trackerChannel) {
+                    trackerChannel.untrack();
+                    trackerChannel.unsubscribe();
+                    trackerChannel = null;
+                }
+                
+                if (currentMarker && map) map.removeLayer(currentMarker);
+                for (let id in otherMarkers) {
+                    if (map) map.removeLayer(otherMarkers[id]);
+                }
+                otherMarkers = {};
+                
+                showToast("Você saiu com sucesso.", "info");
+
+            } catch (error) {
+                console.error("Erro ao sair:", error);
+                showToast("Erro ao tentar sair da conta.", "error");
+            }
+        });
+    }
+
     document.getElementById('onlineToggle').addEventListener('click', toggleOnlineStatus);
     document.getElementById('mainButton').addEventListener('click', handleRouteControl);
     document.getElementById('endButton').addEventListener('click', endRoute);
@@ -247,8 +375,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const closeSidebarBtn = document.getElementById('closeSidebarBtn');
 
     openMenuBtn.addEventListener('click', () => {
-        sidebar.classList.add('open');
-        carregarHistoricoReplays(); 
+        if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        } else {
+            sidebar.classList.add('open');
+            carregarHistoricoReplays(); 
+        }
     });
 
     closeSidebarBtn.addEventListener('click', () => {
@@ -283,7 +415,7 @@ async function carregarHistoricoReplays() {
                 `;
                 
                 card.addEventListener('click', () => {
-                    alert(`Iniciando replay da rota ${rota.id} no mapa...`);
+                    showToast(`Iniciando replay da rota ${rota.id}...`, "info");
                     document.getElementById('sidebar').classList.remove('open');
                 });
                 
@@ -299,7 +431,7 @@ async function carregarHistoricoReplays() {
 }
 
 // ==========================================
-// 4. LÓGICA DO MAPA E ROTAS
+// 5. LÓGICA DO MAPA E ROTAS
 // ==========================================
 function initMap() {
     map = L.map('map', {
@@ -308,6 +440,13 @@ function initMap() {
     }).setView([0, 0], 2);
 
     L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+    map.on('click', () => {
+        const sidebar = document.getElementById('sidebar');
+        if (sidebar && sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+        }
+    });
 
     window.addEventListener('resize', () => { map.invalidateSize(); });
 
@@ -334,6 +473,7 @@ function initMap() {
         document.getElementById('status').innerText = 'GPS não suportado.';
         isOnline = false;
         updateStatusDisplay();
+        showToast("GPS não é suportado pelo seu navegador.", "error");
     }
 }
 
@@ -360,7 +500,7 @@ function updateMarker() {
 }
 
 function handleLocationError(error) {
-    alert("Erro de GPS. Verifique suas permissões.");
+    showToast("Erro de GPS. Verifique suas permissões.", "error");
     isOnline = false;
     updateStatusDisplay();
 }
@@ -378,7 +518,7 @@ function updateStatusDisplay() {
 
 function toggleOnlineStatus() {
     if (isRecording) {
-        alert("Não é possível ficar offline durante uma rota.");
+        showToast("Você não pode ficar offline enquanto grava uma rota.", "error");
         return;
     }
     isOnline = !isOnline;
@@ -391,7 +531,7 @@ function handleRouteControl() {
     
     if (!isRecording) {
         if (!isOnline) {
-            alert("Fique 'Online 🟢' primeiro.");
+            showToast("Fique 'Online 🟢' primeiro antes de iniciar.", "info");
             return;
         }
         isRecording = true;
@@ -402,8 +542,10 @@ function handleRouteControl() {
         updateStatusDisplay();
         
         document.getElementById('timerDisplay').style.display = 'block';
-        document.getElementById('timerDisplay').innerText = '0'; 
+        document.getElementById('timerDisplay').innerText = '0:00'; 
         startTimer();
+        
+        showToast("Rota iniciada!", "success");
 
     } else if (!isPaused) {
         isPaused = true;
@@ -436,7 +578,7 @@ function endRoute() {
 
     updateStatusDisplay();
     resetTimer();
-    alert('🎉 Rota concluída com sucesso!');
+    showToast('🎉 Rota concluída com sucesso!', "success");
 }
 
 function updateRouteLine() {
@@ -523,7 +665,7 @@ function renderizarOutrosUsuarios(estadoGeral) {
             otherMarkers[id].setLatLng([dadosDoColega.lat, dadosDoColega.lng]);
         } else {
             const colegaIcon = L.icon({
-                iconUrl: 'https://i.ibb.co/HD8N3Mgq/rangerprata-lateral.png',
+                iconUrl: './imgs/rangerprata-lateral.png',
                 iconSize: [50, 50],
                 iconAnchor: [25, 25]
             });
