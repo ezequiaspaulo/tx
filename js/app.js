@@ -1,8 +1,8 @@
 // ==========================================
 // 1. CONFIGURAÇÃO SUPABASE
 // ==========================================
-const supabaseUrl = 'https://ujgeheiyoulouzcvztrp.supabase.co';
-const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZ2VoZWl5b3Vsb3V6Y3Z6dHJwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk3NDI4MzAsImV4cCI6MjA5NTMxODgzMH0.g2tvHjJjww2ZqxpMxUUjmQD7yZ8hdQKjUHK-p06BSaI';
+const supabaseUrl = 'https://vwlphwwjnentkzgmtzxv.supabase.co/rest/v1/';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InZ3bHBod3dqbmVudGt6Z210enh2Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA5NDA1MjcsImV4cCI6MjA5NjUxNjUyN30.ybd_eLendaOeaCHjTMDHM7mDt9FlTbmZcg6NnFZcTwo';
 
 const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
