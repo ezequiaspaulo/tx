@@ -76,7 +76,6 @@ if ('serviceWorker' in navigator) {
             .then(reg => {
                 console.log('Service Worker registrado com sucesso!');
                 
-                // SISTEMA DE AUTO-RELOAD: Força a página a atualizar se você mudar a versão do sw.js
                 reg.addEventListener('updatefound', () => {
                     const newWorker = reg.installing;
                     newWorker.addEventListener('statechange', () => {
@@ -91,24 +90,20 @@ if ('serviceWorker' in navigator) {
     });
 }
 
+// Captura o evento nativo (Apenas Android/Desktop Chrome suportam isso)
 window.addEventListener('beforeinstallprompt', (e) => {
     e.preventDefault();
     deferredPrompt = e;
-    
-    const mapContainer = document.getElementById('map');
-    if (mapContainer && mapContainer.style.display === 'block') {
-        if (!window.matchMedia('(display-mode: standalone)').matches) {
-            if (installBanner) installBanner.style.display = 'flex';
-        }
-    }
 });
 
+// Botão de fechar padrão do banner
 if (closeInstallBanner) {
     closeInstallBanner.addEventListener('click', () => {
         if (installBanner) installBanner.style.display = 'none';
     });
 }
 
+// Ação do Botão Baixar (Desktop e Android)
 if (installAppBtn) {
     installAppBtn.addEventListener('click', async () => {
         if (installBanner) installBanner.style.display = 'none';
@@ -304,9 +299,37 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast(`Bem-vindo(a), ${userName}!`, "success");
             initMap();
 
-            if (deferredPrompt && installBanner) {
-                if (!window.matchMedia('(display-mode: standalone)').matches) {
-                    installBanner.style.display = 'flex';
+            // =====================================
+            // LÓGICA DE EXIBIÇÃO DO BANNER DO APP
+            // =====================================
+            if (installBanner) {
+                // Verifica se já não está instalado (Standalone)
+                const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+                
+                if (!isStandalone) {
+                    // Verifica se é iOS (Apple)
+                    const isIos = /iphone|ipad|ipod/.test(window.navigator.userAgent.toLowerCase());
+                    
+                    if (isIos) {
+                        // Personaliza o banner para o Safari (iOS não tem botão baixar automático)
+                        installBanner.innerHTML = `
+                            <div class="install-text">
+                                <strong>Equipe TX (iOS)</strong>
+                                <span>Toque em 'Compartilhar' no Safari e depois 'Adicionar à Tela de Início'</span>
+                            </div>
+                            <button id="closeInstallBanner" class="close-install">✖</button>
+                        `;
+                        installBanner.style.display = 'flex';
+                        
+                        // Re-vincula o evento de fechar
+                        document.getElementById('closeInstallBanner').addEventListener('click', () => {
+                            installBanner.style.display = 'none';
+                        });
+                        
+                    } else if (deferredPrompt) {
+                        // Desktop Chrome, Edge ou Android
+                        installBanner.style.display = 'flex';
+                    }
                 }
             }
 

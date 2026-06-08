@@ -1,5 +1,5 @@
-// Atualize este nome sempre que quiser forçar uma nova versão (ex: v16, v17)
-const CACHE_NAME = 'tx-tracker-v15';
+// Atualize este nome sempre que quiser forçar uma nova versão (ex: v17, v18)
+const CACHE_NAME = 'tx-tracker-v16';
 
 // Arquivos locais essenciais para o funcionamento offline
 const ASSETS_TO_CACHE = [
@@ -8,7 +8,6 @@ const ASSETS_TO_CACHE = [
   './css/style.css',
   './js/app.js',
   './manifest.json',
-  './imgs/tx.jpg',
   './imgs/tx.jpg',
   './imgs/rangerprata-lateral.png'
 ];
